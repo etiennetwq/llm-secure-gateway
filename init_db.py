@@ -1,13 +1,13 @@
 import sqlite3
 
 def init_database():
-    # 1. 连接到本地 SQLite 数据库（如果文件不存在，会自动在项目下创建）
+    # 1. Connect to the local SQLite database (auto-created if it doesn't exist)
     conn = sqlite3.connect("secure_gateway.db")
     cursor = conn.cursor()
     
-    print("正在初始化安全网关数据库结构...")
+    print("Initializing the security gateway database schema...")
 
-    # 2. 创建用户表
+    # 2. Create the users table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,7 +17,7 @@ def init_database():
     )
     """)
 
-    # 3. 创建对话日志表
+    # 3. Create the chat logs table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS chat_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +30,7 @@ def init_database():
     )
     """)
 
-    # 4. 创建安全拦截告警表
+    # 4. Create the security alerts table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS security_alerts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,16 +43,16 @@ def init_database():
     )
     """)
 
-    # 5. 顺手往用户表里插入一个测试账号（假设是你自己）
+    # 5. Insert a test account into the users table
     try:
-        # 这里先用明文代替，后面我们会升级成加密哈希
+        # Using plaintext temporarily; will upgrade to cryptographic hashes later
         cursor.execute("INSERT OR IGNORE INTO users (id, username, api_key_hash) VALUES (1, 'etienne_test', 'test_token_123')")
     except sqlite3.IntegrityError:
         pass
 
     conn.commit()
     conn.close()
-    print("🎉 数据库结构初始化成功！已生成 'secure_gateway.db' 文件。")
+    print("🎉 Database schema initialized successfully! 'secure_gateway.db' generated.")
 
 if __name__ == "__main__":
     init_database()
