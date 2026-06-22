@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 import requests
 import os
@@ -6,6 +6,14 @@ from dotenv import load_dotenv
 
 # Import the extracted data persistence and history retrieval functions
 from crud import log_chat, get_recent_history
+
+from fastapi import Depends, Request
+
+from auth import verify_api_key
+from prompt_scanner import analyze_prompt
+from security_alerts import log_security_alert
+
+
 
 load_dotenv()
 app = FastAPI(title="LLM Security Audit Gateway", version="2.0")
@@ -32,7 +40,7 @@ class ChatRequest(BaseModel):
     )
 
 @app.post("/chat")
-def chat_endpoint(request: ChatRequest) -> dict:
+def chat_endpoint(request: ChatRequest, http_request: Request, user_id: int = Depends(verify_api_key)) -> dict:
     """
     Processes incoming chat requests, manages conversational memory, and communicates with the LLM API.
 
@@ -42,6 +50,27 @@ def chat_endpoint(request: ChatRequest) -> dict:
     Returns:
         dict:A dictionary containing the status, the LLM's reply, and the token consumption
     """
+
+    risk = analyze_prompt(request.prompt)
+
+    if risk["action"] == "block":
+
+        client_ip = http_request.client.host if http_request.client else "unknown"
+
+        log_security_alert(
+            user_id=user_id,
+            blocked_prompt=request.prompt,
+            attack_type=risk["category"],
+            client_ip=client_ip
+        )
+
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Prompt blocked",
+                "risk": risk
+            }
+        )
 
     # 1. Prepare LLM communication configuration
     api_key = os.getenv("DEEPSEEK_API_KEY")
