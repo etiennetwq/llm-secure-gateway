@@ -239,7 +239,7 @@ Important:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/etiennetwq/llm-secure-gateway
+git clone https://github.com/etiennetwq/llm-secure-gateway.git
 cd llm-secure-gateway
 ```
 

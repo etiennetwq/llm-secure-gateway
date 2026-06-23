@@ -1,64 +1,93 @@
 from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
-import requests
 import os
+import httpx
 from dotenv import load_dotenv
 
-# Import the extracted data persistence and history retrieval functions
 from crud import log_chat, get_recent_history
-
-from fastapi import Depends, Request
-
 from auth import verify_api_key
 from prompt_scanner import analyze_prompt
 from security_alerts import log_security_alert
 
 
-
 load_dotenv()
-app = FastAPI(title="LLM Security Audit Gateway", version="2.0")
+
+app = FastAPI(
+    title="LLM Security Audit Gateway",
+    version="2.1"
+)
+
 
 class ChatRequest(BaseModel):
     """
-    Represents the incoming payload for a chat interaction, providing validation rules.
+    Represents the incoming payload for a chat interaction.
 
     Attributes:
-        user_id: Must be a valid positive integer to prevent injection
-        prompt: The user input, length strictly limited to 1-200 characters to prevent token exhaustion
+        user_id: Must be a valid positive integer.
+        prompt: User input with strict length control.
     """
+
     user_id: int = Field(
-        ..., 
-        gt=0, 
+        ...,
+        gt=0,
         description="Must be a valid positive integer"
     )
 
     prompt: str = Field(
-        ..., 
-        min_length=1, 
-        max_length=200, 
+        ...,
+        min_length=1,
+        max_length=200,
         description="Prompt length strictly limited to 1-200 characters"
     )
 
+
+@app.get("/health")
+def health_check() -> dict:
+    """
+    Simple health check endpoint.
+    """
+
+    return {
+        "status": "ok",
+        "service": "LLM Security Audit Gateway"
+    }
+
+
 @app.post("/chat")
-def chat_endpoint(request: ChatRequest, http_request: Request, user_id: int = Depends(verify_api_key)) -> dict:
+async def chat_endpoint(
+    request: ChatRequest,
+    http_request: Request,
+    authenticated_user_id: int = Depends(verify_api_key)
+) -> dict:
     """
-    Processes incoming chat requests, manages conversational memory, and communicates with the LLM API.
+    Processes incoming chat requests.
 
-    Args:
-        request: The validated incoming chat request payload
-
-    Returns:
-        dict:A dictionary containing the status, the LLM's reply, and the token consumption
+    Workflow:
+    1. Verify API key
+    2. Analyze prompt risk
+    3. Block risky prompts and log security alerts
+    4. Retrieve recent conversation history
+    5. Call external LLM API asynchronously with httpx
+    6. Save successful chat logs
+    7. Return LLM response
     """
 
+    # Optional security check:
+    # Prevent users from using a valid API key but submitting another user's user_id.
+    if request.user_id != authenticated_user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="The request user_id does not match the authenticated API key user."
+        )
+
+    # 1. Prompt risk scanning
     risk = analyze_prompt(request.prompt)
 
     if risk["action"] == "block":
-
         client_ip = http_request.client.host if http_request.client else "unknown"
 
         log_security_alert(
-            user_id=user_id,
+            user_id=authenticated_user_id,
             blocked_prompt=request.prompt,
             attack_type=risk["category"],
             client_ip=client_ip
@@ -72,51 +101,110 @@ def chat_endpoint(request: ChatRequest, http_request: Request, user_id: int = De
             }
         )
 
-    # 1. Prepare LLM communication configuration
+    # 2. Load LLM API configuration
     api_key = os.getenv("DEEPSEEK_API_KEY")
+    model_name = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
+
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="DEEPSEEK_API_KEY is not configured."
+        )
+
     url = "https://api.deepseek.com/chat/completions"
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
-    
-    #  Core Modification: Assemble conversational payload with memory
-    messages_payload = []
-    
-    # 1. Retrieve the most recent 3 conversational turns and append to the payload
-    history = get_recent_history(request.user_id, limit=3)
-    for h in history:
-        messages_payload.append({"role": "user", "content": h["prompt"]})
-        messages_payload.append({"role": "assistant", "content": h["response"]})
-        
-    # 2. Append the user's latest prompt to the end of the payload
-    messages_payload.append({"role": "user", "content": request.prompt})
 
-    # 3. Construct the memory-augmented data payload
+    # 3. Build conversation history payload
+    messages_payload = []
+
+    history = get_recent_history(authenticated_user_id, limit=3)
+
+    for h in history:
+        messages_payload.append(
+            {
+                "role": "user",
+                "content": h["prompt"]
+            }
+        )
+        messages_payload.append(
+            {
+                "role": "assistant",
+                "content": h["response"]
+            }
+        )
+
+    messages_payload.append(
+        {
+            "role": "user",
+            "content": request.prompt
+        }
+    )
+
     data = {
-        "model": "deepseek-chat",
+        "model": model_name,
         "messages": messages_payload,
         "temperature": 0.7
     }
-    
-    # 2. Dispatch the request to the LLM
+
+    # 4. Asynchronous LLM API call with httpx
     try:
-        response = requests.post(url, headers=headers, json=data)
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                url,
+                headers=headers,
+                json=data
+            )
+
+        response.raise_for_status()
         response_json = response.json()
-        ai_reply = response_json['choices'][0]['message']['content']
-        tokens_used = response_json['usage']['total_tokens']
-        
+
+        ai_reply = response_json["choices"][0]["message"]["content"]
+        tokens_used = response_json["usage"]["total_tokens"]
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail={
+                "message": "LLM API returned an error.",
+                "error": e.response.text
+            }
+        )
+
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Network error while calling LLM API: {str(e)}"
+        )
+
+    except (KeyError, IndexError) as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected LLM API response format: {str(e)}"
+        )
+
     except Exception as e:
-        # Translate the exception message to English as well
-        raise HTTPException(status_code=500, detail=f"LLM API invocation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"LLM API invocation failed: {str(e)}"
+        )
 
+    # 5. Save successful chat log
+    log_chat(
+        user_id=authenticated_user_id,
+        prompt=request.prompt,
+        response=ai_reply,
+        tokens_used=tokens_used
+    )
 
-    # 3. Persist data to the SQLite database
-    log_chat(user_id=request.user_id, prompt=request.prompt, response=ai_reply, tokens_used=tokens_used)
-
-    # 4. Return the execution result
+    # 6. Return result
     return {
-        "status": "success", 
-        "reply": ai_reply, 
-        "tokens_consumed": tokens_used
+        "status": "success",
+        "reply": ai_reply,
+        "tokens_consumed": tokens_used,
+        "risk": risk,
+        "model": model_name
     }
