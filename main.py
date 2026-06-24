@@ -11,7 +11,7 @@ from security_alerts import log_security_alert
 from rate_limiter import check_rate_limit
 
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = FastAPI(
     title="LLM Security Audit Gateway",
@@ -107,7 +107,7 @@ async def chat_endpoint(
         )
 
     # 2. Load LLM API configuration
-    api_key = os.getenv("DEEPSEEK_API_KEY")
+    api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
     model_name = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
     if not api_key:
@@ -171,12 +171,15 @@ async def chat_endpoint(
         tokens_used = response_json["usage"]["total_tokens"]
 
     except httpx.HTTPStatusError as e:
+        if e.response.status_code == 401:
+            raise HTTPException(
+                status_code=502,
+                detail="LLM provider authentication failed. Please check the server-side API key configuration."
+            )
+
         raise HTTPException(
-            status_code=e.response.status_code,
-            detail={
-                "message": "LLM API returned an error.",
-                "error": e.response.text
-            }
+            status_code=502,
+            detail="LLM provider returned an error."
         )
 
     except httpx.RequestError as e:
