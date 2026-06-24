@@ -8,6 +8,7 @@ from crud import log_chat, get_recent_history
 from auth import verify_api_key
 from prompt_scanner import analyze_prompt
 from security_alerts import log_security_alert
+from rate_limiter import check_rate_limit
 
 
 load_dotenv()
@@ -64,12 +65,13 @@ async def chat_endpoint(
 
     Workflow:
     1. Verify API key
-    2. Analyze prompt risk
-    3. Block risky prompts and log security alerts
-    4. Retrieve recent conversation history
-    5. Call external LLM API asynchronously with httpx
-    6. Save successful chat logs
-    7. Return LLM response
+    2. Apply rate limiting
+    3. Analyze prompt risk
+    4. Block risky prompts and log security alerts
+    5. Retrieve recent conversation history
+    6. Call external LLM API asynchronously with httpx
+    7. Save successful chat logs
+    8. Return LLM response
     """
 
     # Optional security check:
@@ -80,7 +82,10 @@ async def chat_endpoint(
             detail="The request user_id does not match the authenticated API key user."
         )
 
-    # 1. Prompt risk scanning
+    # 1. Rate limiting
+    rate_limit_status = await check_rate_limit(authenticated_user_id)
+
+    # 2. Prompt risk scanning
     risk = analyze_prompt(request.prompt)
 
     if risk["action"] == "block":
@@ -206,5 +211,6 @@ async def chat_endpoint(
         "reply": ai_reply,
         "tokens_consumed": tokens_used,
         "risk": risk,
+        "rate_limit": rate_limit_status,
         "model": model_name
     }
