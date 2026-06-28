@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, Depends, Request
 from pydantic import BaseModel, Field
 import os
 import httpx
@@ -9,7 +9,7 @@ from auth import verify_api_key
 from prompt_scanner import analyze_prompt
 from security_alerts import log_security_alert
 from rate_limiter import check_rate_limit
-
+from errors import raise_api_error
 
 load_dotenv(override=True)
 
@@ -77,9 +77,13 @@ async def chat_endpoint(
     # Optional security check:
     # Prevent users from using a valid API key but submitting another user's user_id.
     if request.user_id != authenticated_user_id:
-        raise HTTPException(
+        raise_api_error(
             status_code=403,
-            detail="The request user_id does not match the authenticated API key user."
+            error_code="USER_ID_MISMATCH",
+            message="The request user_id does not match the authenticated API key user.",
+            details={
+                "request_user_id": request.user_id
+            }
         )
 
     # 1. Rate limiting
@@ -98,22 +102,24 @@ async def chat_endpoint(
             client_ip=client_ip
         )
 
-        raise HTTPException(
+        raise_api_error(
             status_code=403,
-            detail={
-                "message": "Prompt blocked",
+            error_code="PROMPT_BLOCKED",
+            message="Prompt blocked by security policy.",
+            details={
                 "risk": risk
             }
         )
 
-    # 2. Load LLM API configuration
+    # 3. Load LLM API configuration
     api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
     model_name = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
     if not api_key:
-        raise HTTPException(
+        raise_api_error(
             status_code=500,
-            detail="DEEPSEEK_API_KEY is not configured."
+            error_code="LLM_API_KEY_NOT_CONFIGURED",
+            message="LLM provider API key is not configured."
         )
 
     url = "https://api.deepseek.com/chat/completions"
@@ -123,7 +129,7 @@ async def chat_endpoint(
         "Content-Type": "application/json"
     }
 
-    # 3. Build conversation history payload
+    # 4. Build conversation history payload
     messages_payload = []
 
     history = get_recent_history(authenticated_user_id, limit=3)
@@ -155,7 +161,7 @@ async def chat_endpoint(
         "temperature": 0.7
     }
 
-    # 4. Asynchronous LLM API call with httpx
+    # 5. Asynchronous LLM API call with httpx
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -172,35 +178,43 @@ async def chat_endpoint(
 
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 401:
-            raise HTTPException(
+            raise_api_error(
                 status_code=502,
-                detail="LLM provider authentication failed. Please check the server-side API key configuration."
+                error_code="LLM_PROVIDER_AUTH_FAILED",
+                message="LLM provider authentication failed."
             )
 
-        raise HTTPException(
+        raise_api_error(
             status_code=502,
-            detail="LLM provider returned an error."
+            error_code="LLM_PROVIDER_ERROR",
+            message="LLM provider returned an error.",
+            details={
+                "provider_status_code": e.response.status_code
+            }
         )
 
-    except httpx.RequestError as e:
-        raise HTTPException(
+    except httpx.RequestError:
+        raise_api_error(
             status_code=502,
-            detail=f"Network error while calling LLM API: {str(e)}"
+            error_code="LLM_NETWORK_ERROR",
+            message="Network error while calling LLM provider."
         )
 
-    except (KeyError, IndexError) as e:
-        raise HTTPException(
+    except (KeyError, IndexError, TypeError, ValueError):
+        raise_api_error(
+            status_code=502,
+            error_code="LLM_RESPONSE_FORMAT_ERROR",
+            message="Unexpected LLM provider response format."
+        )
+
+    except Exception:
+        raise_api_error(
             status_code=500,
-            detail=f"Unexpected LLM API response format: {str(e)}"
+            error_code="LLM_INVOCATION_FAILED",
+            message="LLM API invocation failed."
         )
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"LLM API invocation failed: {str(e)}"
-        )
-
-    # 5. Save successful chat log
+    # 6. Save successful chat log
     log_chat(
         user_id=authenticated_user_id,
         prompt=request.prompt,
@@ -208,7 +222,7 @@ async def chat_endpoint(
         tokens_used=tokens_used
     )
 
-    # 6. Return result
+    # 7. Return result
     return {
         "status": "success",
         "reply": ai_reply,

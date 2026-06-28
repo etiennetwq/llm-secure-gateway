@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Any, cast
 
 import pytest
 from fastapi import HTTPException
@@ -57,6 +58,25 @@ def setup_test_database(tmp_path, monkeypatch):
     monkeypatch.setattr(auth, "get_db_connection", get_test_connection)
 
 
+def assert_error_detail(
+    exception: HTTPException,
+    expected_error_code: str,
+    expected_message: str
+) -> None:
+    """
+    Assert that an HTTPException uses the standardized error format.
+    """
+
+    assert isinstance(exception.detail, dict)
+
+    detail = cast(dict[str, Any], exception.detail)
+
+    assert detail["status"] == "error"
+    assert detail["error_code"] == expected_error_code
+    assert detail["message"] == expected_message
+    assert detail["details"] == {}
+
+
 def test_valid_api_key_returns_user_id(tmp_path, monkeypatch):
     setup_test_database(tmp_path, monkeypatch)
 
@@ -74,7 +94,11 @@ def test_invalid_api_key_returns_401(tmp_path, monkeypatch):
     exception = exc_info.value
 
     assert exception.status_code == 401
-    assert exception.detail == "Invalid API Key"
+    assert_error_detail(
+        exception=exception,
+        expected_error_code="INVALID_API_KEY",
+        expected_message="Invalid API key."
+    )
 
 
 def test_inactive_api_key_returns_401(tmp_path, monkeypatch):
@@ -86,7 +110,11 @@ def test_inactive_api_key_returns_401(tmp_path, monkeypatch):
     exception = exc_info.value
 
     assert exception.status_code == 401
-    assert exception.detail == "Invalid API Key"
+    assert_error_detail(
+        exception=exception,
+        expected_error_code="INVALID_API_KEY",
+        expected_message="Invalid API key."
+    )
 
 
 def test_empty_api_key_returns_401(tmp_path, monkeypatch):
@@ -98,4 +126,24 @@ def test_empty_api_key_returns_401(tmp_path, monkeypatch):
     exception = exc_info.value
 
     assert exception.status_code == 401
-    assert exception.detail == "Invalid API Key"
+    assert_error_detail(
+        exception=exception,
+        expected_error_code="INVALID_API_KEY",
+        expected_message="Invalid API key."
+    )
+
+def test_missing_api_key_returns_401(tmp_path, monkeypatch):
+    setup_test_database(tmp_path, monkeypatch)
+
+    with pytest.raises(HTTPException) as exc_info:
+        auth.verify_api_key(x_api_key=None)
+
+    exception = exc_info.value
+
+    assert exception.status_code == 401
+    assert_error_detail(
+        exception=exception,
+        expected_error_code="MISSING_API_KEY",
+        expected_message="Missing API key."
+    )
+    

@@ -66,12 +66,17 @@ def test_rate_limiter_blocks_after_limit_exceeded(monkeypatch):
         assert exception.headers is not None
 
         detail = cast(dict[str, Any], exception.detail)
+        details = cast(dict[str, Any], detail["details"])
         headers = cast(dict[str, str], exception.headers)
 
-        assert detail["message"] == "Rate limit exceeded"
-        assert detail["limit"] == 2
-        assert detail["window_seconds"] == 60
-        assert detail["retry_after_seconds"] > 0
+        assert detail["status"] == "error"
+        assert detail["error_code"] == "RATE_LIMIT_EXCEEDED"
+        assert detail["message"] == "Rate limit exceeded."
+
+        assert details["limit"] == 2
+        assert details["window_seconds"] == 60
+        assert details["retry_after_seconds"] > 0
+
         assert "Retry-After" in headers
 
     asyncio.run(run_test())
@@ -96,7 +101,15 @@ def test_rate_limiter_tracks_users_separately(monkeypatch):
         with pytest.raises(HTTPException) as exc_info:
             await rate_limiter.check_rate_limit(user_id=1)
 
-        assert exc_info.value.status_code == 429
+        exception = exc_info.value
+
+        assert exception.status_code == 429
+        assert isinstance(exception.detail, dict)
+
+        detail = cast(dict[str, Any], exception.detail)
+
+        assert detail["status"] == "error"
+        assert detail["error_code"] == "RATE_LIMIT_EXCEEDED"
 
     asyncio.run(run_test())
 
@@ -120,3 +133,5 @@ def test_rate_limiter_allows_request_after_window_expires(monkeypatch):
         assert second_result["remaining_requests"] == 0
 
     asyncio.run(run_test())
+
+    

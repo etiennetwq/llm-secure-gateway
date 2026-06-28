@@ -2,9 +2,8 @@ import time
 import os
 import asyncio
 from collections import defaultdict, deque
-from fastapi import HTTPException
 from dotenv import load_dotenv
-
+from errors import raise_api_error
 
 load_dotenv()
 
@@ -58,10 +57,11 @@ async def check_rate_limit(user_id: int) -> dict:
         if len(request_times) >= MAX_REQUESTS:
             retry_after = int(WINDOW_SECONDS - (current_time - request_times[0])) + 1
 
-            raise HTTPException(
+            raise_api_error(
                 status_code=429,
-                detail={
-                    "message": "Rate limit exceeded",
+                error_code="RATE_LIMIT_EXCEEDED",
+                message="Rate limit exceeded.",
+                details={
                     "limit": MAX_REQUESTS,
                     "window_seconds": WINDOW_SECONDS,
                     "retry_after_seconds": retry_after
@@ -81,3 +81,4 @@ async def check_rate_limit(user_id: int) -> dict:
             "window_seconds": WINDOW_SECONDS,
             "remaining_requests": remaining_requests
         }
+    

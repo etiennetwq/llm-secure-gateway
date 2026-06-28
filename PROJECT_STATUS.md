@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.2
+v0.2.3
 
 ## Project Goal
 
@@ -23,6 +23,11 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Automated pytest tests added for rate limiting
 * Automated pytest tests added for chat_logs database logging
 * Automated pytest tests added for security_alerts database logging
+* Standardized API error response format added in errors.py
+* Auth error responses standardized
+* Rate limit error responses standardized
+* Chat endpoint error responses standardized
+* Pytest tests added for standardized error response format
 
 ## Recent Fixes
 
@@ -35,22 +40,23 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-06-27: Verified pytest result: 8 passed with no warning
 * 2026-06-28: Added pytest tests for chat_logs and security_alerts database logging
 * 2026-06-28: Verified database logging tests pass with pytest
+* 2026-06-28: Added errors.py for standardized API error responses
+* 2026-06-28: Standardized error responses in auth.py, rate_limiter.py, and main.py
+* 2026-06-28: Updated auth and rate limiter tests for the new error response format
+* 2026-06-28: Added pytest tests for error response helper functions
 
 ## Known Issues
 
-
-* Need better API error response format
 * Need deployment instructions
 * API key is still stored and compared as plaintext in the current local prototype; should be upgraded to hashed API key storage later
 * Rate limiter is currently in-memory and suitable for local/single-process development only
 
 ## Next Tasks
 
-1. Improve API error response format
-2. Add structured security alert logs
-3. Improve README setup instructions
-4. Add deployment instructions
-5. Prepare GitHub portfolio description
+1. Add structured security alert logs
+2. Improve README setup instructions
+3. Add deployment instructions
+4. Prepare GitHub portfolio description
 
 ## Important Decisions
 
