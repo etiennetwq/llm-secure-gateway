@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.1
+v0.2.2
 
 ## Project Goal
 
@@ -21,6 +21,8 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Development dependency file added in requirements-dev.txt
 * Automated pytest tests added for API key authentication
 * Automated pytest tests added for rate limiting
+* Automated pytest tests added for chat_logs database logging
+* Automated pytest tests added for security_alerts database logging
 
 ## Recent Fixes
 
@@ -31,11 +33,12 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-06-27: Added pytest tests for rate_limiter.py covering allowed requests, exceeded limits, separate users, and expired windows
 * 2026-06-27: Removed FastAPI TestClient usage from auth tests to avoid Starlette deprecation warning
 * 2026-06-27: Verified pytest result: 8 passed with no warning
+* 2026-06-28: Added pytest tests for chat_logs and security_alerts database logging
+* 2026-06-28: Verified database logging tests pass with pytest
 
 ## Known Issues
 
-* Need to confirm database logging works correctly for chat_logs
-* Need to confirm security alert logging works correctly for blocked prompts
+
 * Need better API error response format
 * Need deployment instructions
 * API key is still stored and compared as plaintext in the current local prototype; should be upgraded to hashed API key storage later
@@ -43,12 +46,11 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 
 ## Next Tasks
 
-1. Add pytest tests for database logging in chat_logs and security_alerts
-2. Improve API error response format
-3. Add structured security alert logs
-4. Improve README setup instructions
-5. Add deployment instructions
-6. Prepare GitHub portfolio description
+1. Improve API error response format
+2. Add structured security alert logs
+3. Improve README setup instructions
+4. Add deployment instructions
+5. Prepare GitHub portfolio description
 
 ## Important Decisions
 
