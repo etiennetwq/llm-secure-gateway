@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.5
+v0.2.6
 
 ## Project Goal
 
@@ -30,6 +30,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Pytest tests added for standardized error response format
 * Structured security alert logs added
 * README setup instructions improved
+* Deployment instructions added in DEPLOYMENT.md
 
 ## Recent Fixes
 
@@ -50,17 +51,17 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-06-29: Updated blocked prompt logging to include event_type, severity, risk_score, action, endpoint, and details
 * 2026-06-29: Updated database logging tests for structured security alerts
 * 2026-06-29: Improved README setup instructions, API usage documentation, test instructions, and project structure.
+* 2026-06-29: Added DEPLOYMENT.md with local deployment, cloud deployment preparation, environment variable setup, smoke tests, and deployment safety checklist.
+* 2026-06-29: Added README deployment reference section.
 
 ## Known Issues
 
-* Need deployment instructions
 * API key is still stored and compared as plaintext in the current local prototype; should be upgraded to hashed API key storage later
 * Rate limiter is currently in-memory and suitable for local/single-process development only
 
 ## Next Tasks
 
-1. Add deployment instructions
-2. Prepare GitHub portfolio description
+1. Prepare GitHub portfolio description
 
 ## Important Decisions
 

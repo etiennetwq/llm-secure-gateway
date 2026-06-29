@@ -361,6 +361,26 @@ The test suite covers:
 
 ---
 
+## Deployment
+
+Deployment instructions are available in:
+
+```text
+DEPLOYMENT.md
+```
+
+The deployment guide covers:
+
+* Local production-like startup
+* Environment variable configuration
+* SQLite deployment notes
+* Cloud deployment preparation
+* Post-deployment smoke tests
+* Deployment safety checklist
+
+---
+
+
 ## Local Files Not Uploaded to GitHub
 
 The following files should not be committed:
