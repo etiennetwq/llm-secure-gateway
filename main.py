@@ -99,7 +99,16 @@ async def chat_endpoint(
             user_id=authenticated_user_id,
             blocked_prompt=request.prompt,
             attack_type=risk["category"],
-            client_ip=client_ip
+            client_ip=client_ip,
+            event_type="prompt_blocked",
+            severity=risk["risk_level"],
+            risk_score=risk["risk_score"],
+            action=risk["action"],
+            endpoint="/chat",
+            details={
+                "error_code": "PROMPT_BLOCKED",
+                "scanner_category": risk["category"]
+            }
         )
 
         raise_api_error(

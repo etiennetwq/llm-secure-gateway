@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.3
+v0.2.4
 
 ## Project Goal
 
@@ -28,6 +28,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Rate limit error responses standardized
 * Chat endpoint error responses standardized
 * Pytest tests added for standardized error response format
+* Structured security alert logs added
 
 ## Recent Fixes
 
@@ -44,6 +45,9 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-06-28: Standardized error responses in auth.py, rate_limiter.py, and main.py
 * 2026-06-28: Updated auth and rate limiter tests for the new error response format
 * 2026-06-28: Added pytest tests for error response helper functions
+* 2026-06-29: Added structured fields to security alert logging
+* 2026-06-29: Updated blocked prompt logging to include event_type, severity, risk_score, action, endpoint, and details
+* 2026-06-29: Updated database logging tests for structured security alerts
 
 ## Known Issues
 
@@ -53,10 +57,9 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 
 ## Next Tasks
 
-1. Add structured security alert logs
-2. Improve README setup instructions
-3. Add deployment instructions
-4. Prepare GitHub portfolio description
+1. Improve README setup instructions
+2. Add deployment instructions
+3. Prepare GitHub portfolio description
 
 ## Important Decisions
 
