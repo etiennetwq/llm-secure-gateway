@@ -2,150 +2,69 @@
 
 A FastAPI-based security audit gateway for Large Language Model (LLM) API requests.
 
-This project acts as a middleware layer between users and an external LLM API. Instead of allowing users to call the LLM provider directly, all requests must first pass through this gateway for authentication, rate limiting, prompt risk scanning, logging, and security auditing.
+This project acts as a middleware layer between users and an external LLM provider. Instead of calling the LLM API directly, requests first pass through this gateway for authentication, rate limiting, prompt risk scanning, logging, and security auditing.
 
 ---
 
-## Project Overview
+## Overview
 
-Large Language Models are increasingly used in internal tools, customer support systems, and data workflows. However, directly exposing LLM APIs can create security, privacy, and cost-related risks, such as:
+Directly exposing LLM APIs can create security, privacy, and cost-related risks, such as:
 
-- Unauthorized API access
-- Prompt injection attempts
-- Sensitive information exposure
-- Excessive token usage
-- Lack of audit logs
-- Difficulty monitoring risky user behavior
-- Inconsistent API error responses
+* Unauthorized API access
+* Prompt injection attempts
+* Sensitive information exposure
+* Excessive token usage
+* Lack of audit logs
+* Inconsistent API error responses
 
-This project provides a lightweight LLM Security Audit Gateway that helps control and audit LLM requests before they reach the external provider.
+This project provides a lightweight security gateway that helps control, monitor, and audit LLM requests before they reach the external provider.
 
 ---
 
 ## Key Features
 
-### 1. API Key Authentication
+* **API Key Authentication**
+  Protects the `/chat` endpoint with an `X-API-Key` request header.
 
-The `/chat` endpoint requires an API key in the request header:
+* **User-Based Rate Limiting**
+  Limits how many requests each authenticated user can send within a time window.
+
+* **Prompt Risk Scanner**
+  Detects basic prompt injection patterns and assigns a risk score, risk level, category, and action.
+
+* **Structured Security Alert Logging**
+  Logs blocked prompts with structured fields such as event type, severity, risk score, endpoint, and details.
+
+* **Chat Logging**
+  Stores successful chat interactions, including prompt, response, token usage, and timestamp.
+
+* **Sliding Window Memory**
+  Retrieves recent chat history to support simple multi-turn conversations.
+
+* **Standardized API Error Responses**
+  Returns consistent error objects with `status`, `error_code`, `message`, and `details`.
+
+* **Automated Tests with Pytest**
+  Includes tests for authentication, rate limiting, database logging, security alert logging, and error response helpers.
+
+---
+
+## Tech Stack
+
+* Python
+* FastAPI
+* Pydantic
+* SQLite
+* DeepSeek API
+* httpx
+* python-dotenv
+* pytest
+
+---
+
+## Project Structure
 
 ```text
-X-API-Key
-
-If the API key is missing, invalid, or inactive, the request is rejected.
-
-Current prototype note:
-
-API keys are currently stored and compared as plaintext for local development.
-A future improvement is to store hashed API keys instead.
-2. User-Based Rate Limiting
-
-The gateway includes an in-memory rate limiter.
-
-Default configuration:
-
-RATE_LIMIT_MAX_REQUESTS=5
-RATE_LIMIT_WINDOW_SECONDS=60
-
-If a user exceeds the request limit, the API returns:
-
-429 Too Many Requests
-
-The response also includes a Retry-After header.
-
-Current prototype note:
-
-The rate limiter is currently in-memory and suitable for local single-process development.
-A future improvement is to use Redis for distributed deployment.
-3. Prompt Risk Scanner
-
-Before forwarding a prompt to the external LLM provider, the gateway analyzes the prompt and assigns a risk result.
-
-The scanner returns:
-
-risk_score
-risk_level
-category
-action
-
-Possible actions:
-
-allow
-warn
-block
-
-High-risk prompts are blocked before reaching the external LLM provider.
-
-4. Structured Security Alert Logging
-
-Blocked prompts are stored in the security_alerts table for auditing.
-
-The alert log records structured security event information such as:
-
-user_id
-blocked_prompt
-attack_type
-client_ip
-event_type
-severity
-risk_score
-action
-endpoint
-details
-timestamp
-
-This makes the project more suitable for later analytics, dashboarding, and security auditing.
-
-5. Chat Logging
-
-Successful LLM interactions are stored in the chat_logs table.
-
-Each chat log records:
-
-user_id
-prompt
-response
-tokens_used
-created_at
-6. Sliding Window Memory
-
-The gateway retrieves recent conversation history from the database and sends it together with the latest prompt.
-
-This allows the LLM to support simple multi-turn conversations while keeping context size controlled.
-
-7. Standardized API Error Responses
-
-The project uses a consistent error response format:
-
-{
-  "detail": {
-    "status": "error",
-    "error_code": "ERROR_CODE",
-    "message": "Human-readable error message.",
-    "details": {}
-  }
-}
-
-This makes errors easier to handle in clients, tests, and future frontend integrations.
-
-8. Automated Tests with Pytest
-
-The project includes pytest tests for:
-
-API key authentication
-Rate limiting
-Database logging
-Security alert logging
-Standardized error response helpers
-Tech Stack
-Python
-FastAPI
-Pydantic
-SQLite
-DeepSeek API
-httpx
-python-dotenv
-pytest
-Project Structure
 llm-secure-gateway/
 ├── auth.py
 ├── check_balance.py
@@ -165,13 +84,17 @@ llm-secure-gateway/
 │   └── test_rate_limiter.py
 ├── .env.example
 ├── .gitignore
-├── PROJECT_CONTEXT.md
-├── PROJECT_STATUS.md
 ├── pytest.ini
 ├── README.md
 ├── requirements-dev.txt
 └── requirements.txt
-Security Workflow
+```
+
+---
+
+## Security Workflow
+
+```text
 User Request
     ↓
 FastAPI /chat Endpoint
@@ -188,152 +111,179 @@ Security Decision
     ↓
 Save successful chat to chat_logs
     ↓
-Return standardized response to user
-Database Schema
+Return response to user
+```
 
-The project uses SQLite for local development.
+---
 
-users
+## Environment Variables
 
-Stores user account information and API keys.
-
-id
-username
-api_key_hash
-is_active
-chat_logs
-
-Stores successful LLM conversations.
-
-id
-user_id
-prompt
-response
-tokens_used
-created_at
-security_alerts
-
-Stores structured blocked prompt and security event records.
-
-id
-user_id
-blocked_prompt
-attack_type
-client_ip
-event_type
-severity
-risk_score
-action
-endpoint
-details
-timestamp
-Environment Variables
-
-This project uses environment variables to store sensitive configuration.
-
-Create a local .env file based on .env.example.
+Create a local `.env` file based on `.env.example`.
 
 Example:
 
+```env
 DEEPSEEK_API_KEY=your_deepseek_api_key_here
 DEEPSEEK_MODEL=deepseek-v4-flash
 
 RATE_LIMIT_MAX_REQUESTS=5
 RATE_LIMIT_WINDOW_SECONDS=60
+```
 
 Important:
 
+```text
 Do not commit your real .env file.
 Do not commit real API keys.
 Only commit .env.example.
-Installation
-1. Clone the Repository
+```
+
+---
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
 git clone https://github.com/your-username/llm-secure-gateway.git
 cd llm-secure-gateway
+```
 
-Replace your-username with your own GitHub username.
+Replace `your-username` with your own GitHub username.
 
-2. Create a Virtual Environment
+---
+
+### 2. Create a Virtual Environment
 
 For Windows PowerShell:
 
+```powershell
 python -m venv .venv
 .venv\Scripts\activate
+```
 
 For macOS / Linux:
 
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
-3. Install Runtime Dependencies
+```
+
+---
+
+### 3. Install Dependencies
+
+Runtime dependencies:
+
+```bash
 pip install -r requirements.txt
-4. Install Development Dependencies
+```
 
-For running tests:
+Development dependencies for testing:
 
+```bash
 pip install -r requirements-dev.txt
-5. Create Local .env
+```
+
+---
+
+### 4. Create Local `.env`
 
 For Windows PowerShell:
 
+```powershell
 copy .env.example .env
+```
 
 For macOS / Linux:
 
+```bash
 cp .env.example .env
+```
 
-Then open .env and replace the placeholder value with your own local API key.
+Then open `.env` and replace the placeholder value with your own local API key.
 
-Do not upload the real .env file to GitHub.
+---
 
-6. Initialize the Database
+### 5. Initialize the Database
+
+```bash
 python init_db.py
+```
 
 This creates or updates the local SQLite database:
 
+```text
 secure_gateway.db
+```
 
 The database file is local only and should not be committed.
 
-7. Start the FastAPI Server
+---
+
+### 6. Start the FastAPI Server
+
+```bash
 uvicorn main:app --reload
+```
 
 The server will run at:
 
+```text
 http://127.0.0.1:8000
-8. Open Swagger UI
+```
 
-Open:
+Swagger UI:
 
+```text
 http://127.0.0.1:8000/docs
+```
 
-You can test API endpoints directly from the browser.
+---
 
-API Usage
-Health Check
+## API Usage
+
+### Health Check
+
+```text
 GET /health
+```
 
 Example response:
 
+```json
 {
   "status": "ok",
   "service": "LLM Security Audit Gateway"
 }
-Chat Endpoint
+```
+
+---
+
+### Chat Endpoint
+
+```text
 POST /chat
+```
 
 Required header:
 
+```text
 X-API-Key: test_token_123
+```
 
 Example request body:
 
+```json
 {
   "user_id": 1,
   "prompt": "What is data science?"
 }
+```
 
 Example successful response:
 
+```json
 {
   "status": "success",
   "reply": "Data science is ...",
@@ -351,10 +301,15 @@ Example successful response:
   },
   "model": "deepseek-v4-flash"
 }
-Example Error Response
+```
 
-Example invalid API key response:
+---
 
+## Error Response Format
+
+The project uses a standardized API error format:
+
+```json
 {
   "detail": {
     "status": "error",
@@ -363,9 +318,11 @@ Example invalid API key response:
     "details": {}
   }
 }
+```
 
 Example blocked prompt response:
 
+```json
 {
   "detail": {
     "status": "error",
@@ -381,58 +338,34 @@ Example blocked prompt response:
     }
   }
 }
-Running Tests
+```
+
+---
+
+## Running Tests
 
 Run all tests:
 
+```bash
 pytest -v
+```
 
 The test suite covers:
 
-Authentication
-Missing API key handling
-Invalid API key handling
-Rate limiting
-Database chat logging
-Structured security alert logging
-Standardized error response helpers
-Example Test Scenarios
-1. Valid Chat Request
+* API key authentication
+* Missing and invalid API key handling
+* Rate limiting
+* Chat log database writes
+* Structured security alert logging
+* Standardized error response helpers
 
-Expected result:
+---
 
-200 OK
+## Local Files Not Uploaded to GitHub
 
-The prompt is scanned, forwarded to the LLM provider, and logged in chat_logs.
+The following files should not be committed:
 
-2. Invalid API Key
-
-Expected result:
-
-401 Unauthorized
-
-The API returns a standardized error response.
-
-3. Rate Limit Exceeded
-
-Expected result:
-
-429 Too Many Requests
-
-The response includes a Retry-After header.
-
-4. High-Risk Prompt
-
-Expected result:
-
-403 Forbidden
-
-The prompt is blocked and a structured security alert is written to security_alerts.
-
-Local Files Not Uploaded to GitHub
-
-The following files should not be uploaded to GitHub:
-
+```text
 .env
 .venv/
 __pycache__/
@@ -440,65 +373,60 @@ __pycache__/
 *.pyc
 *.db
 secure_gateway.db
+```
 
-These files may contain secrets, local database records, cached files, or local development artifacts.
+These files may contain secrets, local database records, cache files, or local development artifacts.
 
-Current Status
+---
+
+## Current Status
 
 Implemented:
 
-FastAPI /chat endpoint
-DeepSeek API integration
-SQLite database initialization
-Chat log storage
-Sliding window conversation memory
-API key authentication
-Basic prompt risk scanning
-Security alert logging
-Structured security alert logs
-User-based rate limiting
-Standardized API error responses
-Pytest test suite
-Known Limitations
+* FastAPI `/chat` endpoint
+* DeepSeek API integration
+* SQLite database initialization
+* API key authentication
+* Prompt risk scanning
+* User-based rate limiting
+* Chat logging
+* Sliding window memory
+* Structured security alert logging
+* Standardized API error responses
+* Pytest test suite
+
+---
+
+## Known Limitations
 
 This is currently a local development prototype.
 
 Known limitations:
 
-API keys are still stored and compared as plaintext.
-Rate limiter is in-memory and not distributed.
-Deployment instructions are not fully added yet.
-Future Improvements
+* API keys are still stored and compared as plaintext.
+* Rate limiting is in-memory and not distributed.
+* Deployment instructions are not fully added yet.
+
+---
+
+## Future Improvements
 
 Planned improvements:
 
-Deployment instructions
-GitHub portfolio description
-API key hashing
-Redis-based rate limiting
-Admin log query endpoint
-Security analytics dashboard
-Token usage statistics
-Risk category visualization
-Docker support
-PostgreSQL migration
-More advanced prompt risk scoring
-ML-based anomaly detection
-Learning Goals
+* Deployment instructions
+* GitHub portfolio description
+* API key hashing
+* Redis-based rate limiting
+* Admin log query endpoint
+* Security analytics dashboard
+* Token usage statistics
+* Docker support
+* PostgreSQL migration
+* More advanced prompt risk scoring
 
-This project is designed to practice:
+---
 
-Python backend development
-FastAPI API design
-SQLite database operations
-API authentication
-Secure environment variable management
-LLM API integration
-Prompt risk detection
-Rate limiting
-Security audit logging
-Automated testing with pytest
-Author
+## Author
 
 Wenqi Tian
 Master of Data Science
