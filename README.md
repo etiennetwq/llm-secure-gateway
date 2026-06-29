@@ -425,7 +425,6 @@ Known limitations:
 
 * API keys are still stored and compared as plaintext.
 * Rate limiting is in-memory and not distributed.
-* Deployment instructions are not fully added yet.
 
 ---
 
@@ -433,7 +432,6 @@ Known limitations:
 
 Planned improvements:
 
-* Deployment instructions
 * GitHub portfolio description
 * API key hashing
 * Redis-based rate limiting
