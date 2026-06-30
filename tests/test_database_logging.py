@@ -49,6 +49,12 @@ def setup_logging_test_database(tmp_path, monkeypatch):
             prompt TEXT,
             response TEXT,
             tokens_used INTEGER,
+            request_status TEXT DEFAULT 'success',
+            risk_score INTEGER,
+            risk_level TEXT,
+            risk_category TEXT,
+            risk_action TEXT,
+            model TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -116,13 +122,31 @@ def test_log_chat_inserts_chat_log(tmp_path, monkeypatch):
         user_id=1,
         prompt="Hello gateway",
         response="Hello user",
-        tokens_used=25
+        tokens_used=25,
+        request_status="success",
+        risk_score=0,
+        risk_level="low",
+        risk_category="normal",
+        risk_action="allow",
+        model="deepseek-v4-flash"
     )
+
 
     row = fetch_one(
         conn_factory,
         """
-        SELECT user_id, prompt, response, tokens_used, created_at
+        SELECT
+            user_id,
+            prompt,
+            response,
+            tokens_used,
+            request_status,
+            risk_score,
+            risk_level,
+            risk_category,
+            risk_action,
+            model,
+            created_at
         FROM chat_logs
         WHERE user_id = ?
         """,
@@ -134,8 +158,58 @@ def test_log_chat_inserts_chat_log(tmp_path, monkeypatch):
     assert row["prompt"] == "Hello gateway"
     assert row["response"] == "Hello user"
     assert row["tokens_used"] == 25
+    assert row["request_status"] == "success"
+    assert row["risk_score"] == 0
+    assert row["risk_level"] == "low"
+    assert row["risk_category"] == "normal"
+    assert row["risk_action"] == "allow"
+    assert row["model"] == "deepseek-v4-flash"
     assert row["created_at"] is not None
 
+def test_log_chat_uses_default_structured_fields(tmp_path, monkeypatch):
+    conn_factory = setup_logging_test_database(tmp_path, monkeypatch)
+
+    crud.log_chat(
+        user_id=1,
+        prompt="Default metadata prompt",
+        response="Default metadata response",
+        tokens_used=12
+    )
+
+    row = fetch_one(
+        conn_factory,
+        """
+        SELECT
+            user_id,
+            prompt,
+            response,
+            tokens_used,
+            request_status,
+            risk_score,
+            risk_level,
+            risk_category,
+            risk_action,
+            model,
+            created_at
+        FROM chat_logs
+        WHERE user_id = ?
+        """,
+        (1,)
+    )
+
+    assert row is not None
+    assert row["user_id"] == 1
+    assert row["prompt"] == "Default metadata prompt"
+    assert row["response"] == "Default metadata response"
+    assert row["tokens_used"] == 12
+    assert row["request_status"] == "success"
+    assert row["risk_score"] is None
+    assert row["risk_level"] is None
+    assert row["risk_category"] is None
+    assert row["risk_action"] is None
+    assert row["model"] is None
+    assert row["created_at"] is not None
+    
 
 def test_get_recent_history_returns_recent_logs_in_chronological_order(tmp_path, monkeypatch):
     setup_logging_test_database(tmp_path, monkeypatch)

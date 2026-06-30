@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.6
+v0.2.7
 
 ## Project Goal
 
@@ -31,6 +31,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Structured security alert logs added
 * README setup instructions improved
 * Deployment instructions added in DEPLOYMENT.md
+* Structured chat log fields added
 
 ## Recent Fixes
 
@@ -53,6 +54,9 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-06-29: Improved README setup instructions, API usage documentation, test instructions, and project structure.
 * 2026-06-29: Added DEPLOYMENT.md with local deployment, cloud deployment preparation, environment variable setup, smoke tests, and deployment safety checklist.
 * 2026-06-29: Added README deployment reference section.
+* 2026-06-30: Added request_status, risk_score, risk_level, risk_category, risk_action, and model fields to chat_logs.
+* 2026-06-30: Updated chat logging to persist prompt risk metadata for successful requests.
+* 2026-06-30: Updated database logging tests for structured chat logs.
 
 ## Known Issues
 
@@ -61,7 +65,17 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 
 ## Next Tasks
 
-1. Prepare GitHub portfolio description
+1. Add admin log query endpoint
+2. Add admin security alert query endpoint
+3. Organize security test samples
+4. Write Security Test Report
+5. Export SQLite logs to CSV
+6. Use Pandas for log cleaning and statistics
+7. Add anomaly user detection
+8. Build Streamlit dashboard
+9. Add Docker and docker-compose
+10. Prepare architecture diagram and ERD
+11. Prepare GitHub portfolio description
 
 ## Important Decisions
 

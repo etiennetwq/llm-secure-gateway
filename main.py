@@ -228,7 +228,13 @@ async def chat_endpoint(
         user_id=authenticated_user_id,
         prompt=request.prompt,
         response=ai_reply,
-        tokens_used=tokens_used
+        tokens_used=tokens_used,
+        request_status="success",
+        risk_score=risk["risk_score"],
+        risk_level=risk["risk_level"],
+        risk_category=risk["category"],
+        risk_action=risk["action"],
+        model=model_name
     )
 
     # 7. Return result

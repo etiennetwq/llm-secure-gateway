@@ -70,6 +70,12 @@ def init_database() -> None:
             prompt TEXT,
             response TEXT,
             tokens_used INTEGER,
+            request_status TEXT DEFAULT 'success',
+            risk_score INTEGER,
+            risk_level TEXT,
+            risk_category TEXT,
+            risk_action TEXT,
+            model TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -103,6 +109,49 @@ def init_database() -> None:
         # CREATE TABLE IF NOT EXISTS will not update an already existing table.
         # Therefore, these ALTER TABLE checks make sure older local databases
         # can receive the new structured alert fields.
+        add_column_if_missing(
+            cursor=cursor,
+            table_name="chat_logs",
+            column_name="request_status",
+            column_definition="TEXT DEFAULT 'success'"
+        )
+
+        add_column_if_missing(
+            cursor=cursor,
+            table_name="chat_logs",
+            column_name="risk_score",
+            column_definition="INTEGER"
+        )
+
+        add_column_if_missing(
+            cursor=cursor,
+            table_name="chat_logs",
+            column_name="risk_level",
+            column_definition="TEXT"
+        )
+
+        add_column_if_missing(
+            cursor=cursor,
+            table_name="chat_logs",
+            column_name="risk_category",
+            column_definition="TEXT"
+        )
+
+        add_column_if_missing(
+            cursor=cursor,
+            table_name="chat_logs",
+            column_name="risk_action",
+            column_definition="TEXT"
+        )
+
+        add_column_if_missing(
+            cursor=cursor,
+            table_name="chat_logs",
+            column_name="model",
+            column_definition="TEXT"
+        )
+
+        # Lightweight migrations for older security_alerts tables
         add_column_if_missing(
             cursor=cursor,
             table_name="security_alerts",
@@ -147,7 +196,6 @@ def init_database() -> None:
 
         # 6. Insert a test account into the users table
         try:
-            # Using plaintext temporarily; will upgrade to cryptographic hashes later
             cursor.execute(
                 """
                 INSERT OR IGNORE INTO users
