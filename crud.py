@@ -112,3 +112,96 @@ def get_recent_history(user_id: int, limit: int = 3) -> list:
         }
         for row in reversed(rows)
     ]
+
+def get_chat_logs(
+    user_id: int | None = None,
+    request_status: str | None = None,
+    risk_level: str | None = None,
+    risk_category: str | None = None,
+    limit: int = 50,
+    offset: int = 0
+) -> list[dict]:
+    """
+    Retrieve structured chat logs for admin audit queries.
+
+    Args:
+        user_id: Optional user ID filter.
+        request_status: Optional request status filter.
+        risk_level: Optional risk level filter.
+        risk_category: Optional risk category filter.
+        limit: Maximum number of logs to return.
+        offset: Number of logs to skip.
+
+    Returns:
+        A list of structured chat log dictionaries.
+    """
+
+    query = """
+        SELECT
+            id,
+            user_id,
+            prompt,
+            response,
+            tokens_used,
+            request_status,
+            risk_score,
+            risk_level,
+            risk_category,
+            risk_action,
+            model,
+            created_at
+        FROM chat_logs
+    """
+
+    conditions = []
+    params: list = []
+
+    if user_id is not None:
+        conditions.append("user_id = ?")
+        params.append(user_id)
+
+    if request_status is not None:
+        conditions.append("request_status = ?")
+        params.append(request_status)
+
+    if risk_level is not None:
+        conditions.append("risk_level = ?")
+        params.append(risk_level)
+
+    if risk_category is not None:
+        conditions.append("risk_category = ?")
+        params.append(risk_category)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY id DESC LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+
+    conn = get_db_connection()
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
+
+    finally:
+        conn.close()
+
+    return [
+        {
+            "id": row["id"],
+            "user_id": row["user_id"],
+            "prompt": row["prompt"],
+            "response": row["response"],
+            "tokens_used": row["tokens_used"],
+            "request_status": row["request_status"],
+            "risk_score": row["risk_score"],
+            "risk_level": row["risk_level"],
+            "risk_category": row["risk_category"],
+            "risk_action": row["risk_action"],
+            "model": row["model"],
+            "created_at": row["created_at"]
+        }
+        for row in rows
+    ]

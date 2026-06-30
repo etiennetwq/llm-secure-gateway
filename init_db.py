@@ -111,6 +111,14 @@ def init_database() -> None:
         # can receive the new structured alert fields.
         add_column_if_missing(
             cursor=cursor,
+            table_name="users",
+            column_name="is_admin",
+            column_definition="INTEGER DEFAULT 0"
+        )
+
+
+        add_column_if_missing(
+            cursor=cursor,
             table_name="chat_logs",
             column_name="request_status",
             column_definition="TEXT DEFAULT 'success'"
@@ -202,17 +210,32 @@ def init_database() -> None:
                 (
                     id,
                     username,
-                    api_key_hash
+                    api_key_hash,
+                    is_active,
+                    is_admin
                 )
                 VALUES
-                (?, ?, ?)
+                (?, ?, ?, ?, ?)
                 """,
                 (
                     1,
                     "etienne_test",
-                    "test_token_123"
+                    "test_token_123",
+                    1,
+                    1
                 )
             )
+
+            cursor.execute(
+                """
+                UPDATE users
+                SET is_active = 1,
+                    is_admin = 1
+                WHERE id = ?
+                """,
+                (1,)
+            )
+
         except sqlite3.IntegrityError:
             pass
 

@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, Request, Query
 from pydantic import BaseModel, Field
 import os
 import httpx
 from dotenv import load_dotenv
 
-from crud import log_chat, get_recent_history
-from auth import verify_api_key
+from crud import get_chat_logs, log_chat, get_recent_history
+from auth import verify_admin_api_key, verify_api_key
 from prompt_scanner import analyze_prompt
 from security_alerts import log_security_alert
 from rate_limiter import check_rate_limit
@@ -51,6 +51,36 @@ def health_check() -> dict:
     return {
         "status": "ok",
         "service": "LLM Security Audit Gateway"
+    }
+
+@app.get("/admin/logs")
+def admin_get_logs(
+    user_id: int | None = Query(default=None, gt=0),
+    request_status: str | None = Query(default=None),
+    risk_level: str | None = Query(default=None),
+    risk_category: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    admin_user_id: int = Depends(verify_admin_api_key)
+) -> dict:
+    """
+    Admin-only endpoint for querying structured chat logs.
+    """
+
+    logs = get_chat_logs(
+        user_id=user_id,
+        request_status=request_status,
+        risk_level=risk_level,
+        risk_category=risk_category,
+        limit=limit,
+        offset=offset
+    )
+
+    return {
+        "status": "success",
+        "count": len(logs),
+        "admin_user_id": admin_user_id,
+        "logs": logs
     }
 
 
