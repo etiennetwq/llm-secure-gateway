@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.10
+v0.2.11
 
 ## Project Goal
 
@@ -36,6 +36,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Admin API key verification added
 * Admin security alert query endpoint added
 * Security test samples organized
+* Security test report added
 
 ## Recent Fixes
 
@@ -77,6 +78,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-07-01: Added security alert query filters for user_id, attack_type, severity, action, and event_type.
 * 2026-07-01: Added tests for admin security alert query access control and filtering.
 * 2026-07-01: Added SECURITY_TEST_SAMPLES.md with authentication, prompt scanning, rate limiting, admin access control, and logging test scenarios.
+* 2026-07-01: Added SECURITY_TEST_REPORT.md summarizing authentication, prompt scanning, rate limiting, admin access control, and logging test results.
 
 ## Known Issues
 
@@ -85,14 +87,13 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 
 ## Next Tasks
 
-1. Write Security Test Report
-2. Export SQLite logs to CSV
-3. Use Pandas for log cleaning and statistics
-4. Add anomaly user detection
-5. Build Streamlit dashboard
-6. Add Docker and docker-compose
-7. Prepare architecture diagram and ERD
-8. Prepare GitHub portfolio description
+1. Export SQLite logs to CSV
+2. Use Pandas for log cleaning and statistics
+3. Add anomaly user detection
+4. Build Streamlit dashboard
+5. Add Docker and docker-compose
+6. Prepare architecture diagram and ERD
+7. Prepare GitHub portfolio description
 
 ## Important Decisions
 
