@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.8
+v0.2.9
 
 ## Project Goal
 
@@ -34,6 +34,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Structured chat log fields added
 * Admin chat log query endpoint added
 * Admin API key verification added
+* Admin security alert query endpoint added
 
 ## Recent Fixes
 
@@ -62,6 +63,9 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-06-30: Added admin-only /admin/logs endpoint for querying structured chat logs.
 * 2026-06-30: Added admin API key verification for protected admin endpoints.
 * 2026-06-30: Added tests for admin log query access control and filtering.
+* 2026-07-01: Added admin-only /admin/alerts endpoint for querying structured security alerts.
+* 2026-07-01: Added security alert query filters for user_id, attack_type, severity, action, and event_type.
+* 2026-07-01: Added tests for admin security alert query access control and filtering.
 
 ## Known Issues
 
@@ -70,16 +74,15 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 
 ## Next Tasks
 
-1. Add admin security alert query endpoint
-2. Organize security test samples
-3. Write Security Test Report
-4. Export SQLite logs to CSV
-5. Use Pandas for log cleaning and statistics
-6. Add anomaly user detection
-7. Build Streamlit dashboard
-8. Add Docker and docker-compose
-9. Prepare architecture diagram and ERD
-10. Prepare GitHub portfolio description
+1. Organize security test samples
+2. Write Security Test Report
+3. Export SQLite logs to CSV
+4. Use Pandas for log cleaning and statistics
+5. Add anomaly user detection
+6. Build Streamlit dashboard
+7. Add Docker and docker-compose
+8. Prepare architecture diagram and ERD
+9. Prepare GitHub portfolio description
 
 ## Important Decisions
 

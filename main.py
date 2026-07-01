@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from crud import get_chat_logs, log_chat, get_recent_history
 from auth import verify_admin_api_key, verify_api_key
 from prompt_scanner import analyze_prompt
-from security_alerts import log_security_alert
+from security_alerts import log_security_alert, get_security_alerts
 from rate_limiter import check_rate_limit
 from errors import raise_api_error
 
@@ -82,6 +82,39 @@ def admin_get_logs(
         "admin_user_id": admin_user_id,
         "logs": logs
     }
+
+@app.get("/admin/alerts")
+def admin_get_alerts(
+    user_id: int | None = Query(default=None, gt=0),
+    attack_type: str | None = Query(default=None),
+    severity: str | None = Query(default=None),
+    action: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    admin_user_id: int = Depends(verify_admin_api_key)
+) -> dict:
+    """
+    Admin-only endpoint for querying structured security alerts.
+    """
+
+    alerts = get_security_alerts(
+        user_id=user_id,
+        attack_type=attack_type,
+        severity=severity,
+        action=action,
+        event_type=event_type,
+        limit=limit,
+        offset=offset
+    )
+
+    return {
+        "status": "success",
+        "count": len(alerts),
+        "admin_user_id": admin_user_id,
+        "alerts": alerts
+    }
+
 
 
 @app.post("/chat")
