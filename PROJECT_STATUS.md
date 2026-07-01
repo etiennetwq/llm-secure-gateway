@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.9
+v0.2.10
 
 ## Project Goal
 
@@ -35,9 +35,19 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Admin chat log query endpoint added
 * Admin API key verification added
 * Admin security alert query endpoint added
+* Security test samples organized
 
 ## Recent Fixes
 
+* 2026-06-15: Initialized project structure, set up virtual environment, and created initial README.md
+* 2026-06-16: Implemented basic FastAPI application skeleton and /health check endpoint
+* 2026-06-17: Configured environment variable loading and created .env.example
+* 2026-06-18: Integrated DeepSeek LLM API and established synchronous /chat endpoint communication
+* 2026-06-19: Set up local SQLite database connection, models, and basic CRUD operations
+* 2026-06-21: Implemented API key authentication logic and dependency in auth.py
+* 2026-06-22: Developed initial prompt scanner module (prompt_scanner.py) for risk keyword filtering
+* 2026-06-23: Implemented security_alerts.py to persist blocked prompts and malicious IPs into SQLite
+* 2026-06-24: Refactored core routing logic, separated database operations, and prepared for rate limiting integration
 * 2026-06-25: Replaced exposed API key and updated .env.example
 * 2026-06-25: Added rate limiting middleware / dependency
 * 2026-06-25: Verified rate limit returns 429 after exceeding limit
@@ -66,6 +76,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-07-01: Added admin-only /admin/alerts endpoint for querying structured security alerts.
 * 2026-07-01: Added security alert query filters for user_id, attack_type, severity, action, and event_type.
 * 2026-07-01: Added tests for admin security alert query access control and filtering.
+* 2026-07-01: Added SECURITY_TEST_SAMPLES.md with authentication, prompt scanning, rate limiting, admin access control, and logging test scenarios.
 
 ## Known Issues
 
@@ -74,15 +85,14 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 
 ## Next Tasks
 
-1. Organize security test samples
-2. Write Security Test Report
-3. Export SQLite logs to CSV
-4. Use Pandas for log cleaning and statistics
-5. Add anomaly user detection
-6. Build Streamlit dashboard
-7. Add Docker and docker-compose
-8. Prepare architecture diagram and ERD
-9. Prepare GitHub portfolio description
+1. Write Security Test Report
+2. Export SQLite logs to CSV
+3. Use Pandas for log cleaning and statistics
+4. Add anomaly user detection
+5. Build Streamlit dashboard
+6. Add Docker and docker-compose
+7. Prepare architecture diagram and ERD
+8. Prepare GitHub portfolio description
 
 ## Important Decisions
 
