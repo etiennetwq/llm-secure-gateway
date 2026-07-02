@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 secure_gateway.db
 .pytest_cache/
+exports/*.csv
