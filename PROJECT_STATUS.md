@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.13
+v0.2.14
 
 ## Project Goal
 
@@ -39,6 +39,7 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * Security test report added
 * SQLite log export script added
 * Demo security log generator added
+* Pandas log cleaning and statistics analysis added
 
 ## Recent Fixes
 
@@ -84,6 +85,8 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-07-02: Added export_logs.py to export chat_logs and security_alerts from SQLite to CSV files.
 * 2026-07-10: Added generate_demo_logs.py to create inactive simulated demo users, chat logs, and security alerts for analytics.
 * 2026-07-10: Restricted demo data cleanup to exact demo_user_* usernames.
+* 2026-07-10: Added analyze_logs.py to validate, clean, and summarize exported chat and security alert logs with Pandas.
+* 2026-07-10: Added automated tests for CSV validation, cleaning, blocked-rate calculation, and high-risk user ranking.
 
 ## Known Issues
 
@@ -92,13 +95,12 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 
 ## Next Tasks
 
-1. Use Pandas for log cleaning and statistics
-2. Add anomaly user detection
-3. Build Streamlit dashboard
-4. Write analysis report
-5. Add Docker and docker-compose
-6. Prepare architecture diagram and ERD
-7. Prepare GitHub portfolio description
+1. Add anomaly user detection
+2. Build Streamlit dashboard
+3. Write analysis report
+4. Add Docker and docker-compose
+5. Prepare architecture diagram and ERD
+6. Prepare GitHub portfolio description
 
 ## Important Decisions
 
