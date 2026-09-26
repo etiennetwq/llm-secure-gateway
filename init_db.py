@@ -1,7 +1,7 @@
 import sqlite3
 
+from database import get_database_path
 
-DATABASE_NAME = "secure_gateway.db"
 
 
 def add_column_if_missing(
@@ -43,7 +43,8 @@ def init_database() -> None:
     """
 
     # 1. Connect to the local SQLite database
-    conn = sqlite3.connect(DATABASE_NAME)
+    database_path = get_database_path()
+    conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
 
     # Enable foreign key checks for this connection
@@ -241,7 +242,7 @@ def init_database() -> None:
 
         conn.commit()
 
-        print("🎉 Database schema initialized successfully! 'secure_gateway.db' is ready.")
+        print(f"🎉 Database schema initialized successfully! '{database_path}' is ready.")
 
     except Exception:
         conn.rollback()

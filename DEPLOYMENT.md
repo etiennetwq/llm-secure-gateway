@@ -379,8 +379,36 @@ For a stronger production version, consider:
 * Replace SQLite with PostgreSQL
 * Replace in-memory rate limiting with Redis
 * Add structured application logging
-* Add admin-only audit log query endpoints
-* Add Docker support
+* Add a production-safe bootstrap process instead of a predictable seeded admin key
+* Add authentication to the Streamlit dashboard before any non-local access
 * Add CI tests with GitHub Actions
 * Add deployment-specific environment validation
 * Disable or restrict public Swagger UI in production
+
+---
+
+## 9. Docker Compose: local demo only
+
+`compose.yaml` starts the API and Streamlit dashboard on **127.0.0.1 only**. It persists the SQLite database and CSV exports in named volumes. This is not a production deployment: `init_db.py` still seeds a predictable local test administrator, API keys remain plaintext, rate limiting is in-memory, and the dashboard has no login. Do not change the port bindings to public interfaces without fixing these limitations.
+
+Create a local `.env` from `.env.example` and set your own provider key; `.env` is excluded from Git and the Docker build context. Then:
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+The API health endpoint is at `http://127.0.0.1:8000/health`; the dashboard is at `http://127.0.0.1:8501`. To export container-local logs into the shared dashboard volume after generating local activity:
+
+```bash
+docker compose exec gateway python export_logs.py --db /app/data/secure_gateway.db --output-dir /app/exports
+```
+
+The dashboard will report missing CSV files until the export has run. For a synthetic-only demo inside the container, you can first run:
+
+```bash
+docker compose exec gateway python generate_demo_logs.py --db /app/data/secure_gateway.db --reset-demo
+docker compose exec gateway python export_logs.py --db /app/data/secure_gateway.db --output-dir /app/exports
+```
+
+`docker compose down` stops the services while leaving the named data volumes in place. Never commit `.env`, the SQLite database, or exported CSVs.

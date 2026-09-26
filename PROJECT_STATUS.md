@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.14
+v0.3.0
 
 ## Project Goal
 
@@ -40,6 +40,12 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * SQLite log export script added
 * Demo security log generator added
 * Pandas log cleaning and statistics analysis added
+* Explainable rule-based anomaly user detection added in detect_anomalies.py
+* Local Streamlit security analytics dashboard added in dashboard/
+* Simulated-data analytics report added in ANALYSIS_REPORT.md
+* Local-only Dockerfile and Compose configuration added
+* Architecture diagram and SQLite ERD added in ARCHITECTURE.md
+* GitHub and resume portfolio copy added in PORTFOLIO.md
 
 ## Recent Fixes
 
@@ -87,20 +93,27 @@ A FastAPI-based LLM Security Audit Gateway with API key authentication, prompt s
 * 2026-07-10: Restricted demo data cleanup to exact demo_user_* usernames.
 * 2026-07-10: Added analyze_logs.py to validate, clean, and summarize exported chat and security alert logs with Pandas.
 * 2026-07-10: Added automated tests for CSV validation, cleaning, blocked-rate calculation, and high-risk user ranking.
+* 2026-09-26: Added user anomaly rules with explicit thresholds, reasons, and metrics-only CSV output.
+* 2026-09-26: Added a local Streamlit dashboard for aggregate trends and flagged users, plus isolated UI and date-filter tests.
+* 2026-09-26: Added an isolated synthetic database-to-CSV-to-analytics integration test; full suite: 52 passed.
+* 2026-09-26: Added ANALYSIS_REPORT.md, ARCHITECTURE.md with ERD, and PORTFOLIO.md; synchronized README and deployment guidance.
+* 2026-09-26: Added a loopback-only Dockerfile/Compose demo with persistent named volumes and configurable SQLite path. YAML syntax was checked; Docker runtime was unavailable on the development host.
 
 ## Known Issues
 
 * API key is still stored and compared as plaintext in the current local prototype; should be upgraded to hashed API key storage later
 * Rate limiter is currently in-memory and suitable for local/single-process development only
+* Prompt scanner is keyword-based; anomaly rules use demo thresholds and are not validated against labeled real-world incidents
+* Dashboard has no authentication and must not be exposed publicly
+* Container startup remains unverified because Docker is not installed on the current host
+* CSV analytics does not count authentication failures, rate-limit rejections, or provider failures
 
 ## Next Tasks
 
-1. Add anomaly user detection
-2. Build Streamlit dashboard
-3. Write analysis report
-4. Add Docker and docker-compose
-5. Prepare architecture diagram and ERD
-6. Prepare GitHub portfolio description
+1. Smoke-test the Compose demo on a Docker-enabled local machine.
+2. Replace plaintext API keys and the predictable seeded admin credential before any public deployment.
+3. Add authentication to the dashboard and move rate limiting to shared storage before multi-instance deployment.
+4. Expand audit event coverage and validate anomaly thresholds against reviewed data.
 
 ## Important Decisions
 

@@ -47,6 +47,15 @@ This project provides a lightweight security gateway that helps control, monitor
 * **Automated Tests with Pytest**
   Includes tests for authentication, rate limiting, database logging, security alert logging, and error response helpers.
 
+* **Admin Audit Queries**
+  Protects `/admin/logs` and `/admin/alerts` with admin API-key verification and filtering.
+
+* **Security Analytics**
+  Exports SQLite audit logs to CSV, cleans them with Pandas, computes daily/user metrics, and flags unusual users with explainable rules.
+
+* **Local Dashboard**
+  Displays aggregate trends and anomaly leads in Streamlit without showing raw prompts, replies, or IP addresses.
+
 ---
 
 ## Tech Stack
@@ -59,6 +68,8 @@ This project provides a lightweight security gateway that helps control, monitor
 * httpx
 * python-dotenv
 * pytest
+* pandas
+* Streamlit
 
 ---
 
@@ -67,6 +78,13 @@ This project provides a lightweight security gateway that helps control, monitor
 ```text
 llm-secure-gateway/
 ├── auth.py
+├── analyze_logs.py
+├── detect_anomalies.py
+├── export_logs.py
+├── generate_demo_logs.py
+├── dashboard/
+│   ├── app.py
+│   └── data.py
 ├── check_balance.py
 ├── crud.py
 ├── database.py
@@ -81,7 +99,18 @@ llm-secure-gateway/
 │   ├── test_auth.py
 │   ├── test_database_logging.py
 │   ├── test_error_response_format.py
-│   └── test_rate_limiter.py
+│   ├── test_rate_limiter.py
+│   ├── test_analyze_logs.py
+│   ├── test_detect_anomalies.py
+│   ├── test_dashboard_app.py
+│   ├── test_dashboard_data.py
+│   ├── test_database_path.py
+│   └── test_demo_analytics_pipeline.py
+├── ANALYSIS_REPORT.md
+├── ARCHITECTURE.md
+├── PORTFOLIO.md
+├── Dockerfile
+├── compose.yaml
 ├── .env.example
 ├── .gitignore
 ├── pytest.ini
@@ -358,6 +387,25 @@ The test suite covers:
 * Chat log database writes
 * Structured security alert logging
 * Standardized error response helpers
+* CSV cleaning, analytics, anomaly rules, and Streamlit rendering with synthetic fixtures
+
+---
+
+## Local Analytics Demo
+
+These commands use local files. The generated demo logs are simulated and must not be presented as real security incidents.
+
+```bash
+python generate_demo_logs.py --reset-demo
+python export_logs.py
+python analyze_logs.py
+python detect_anomalies.py
+python -m streamlit run dashboard/app.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
+```
+
+The dashboard opens at `http://127.0.0.1:8501`. It has **no login** and must remain local-only. It reads ignored files in `exports/`. Do not commit or publish the CSV exports: they may contain prompts, replies, and IP addresses. `exports/anomalous_users.csv` contains user-level metrics and is also ignored.
+
+The analytics blocked rate counts only successful chats and logged blocked prompts. It does not include invalid API keys, rate-limit rejections, or provider errors. See [the analysis report](ANALYSIS_REPORT.md) and [architecture/ERD](ARCHITECTURE.md).
 
 ---
 
@@ -414,6 +462,11 @@ Implemented:
 * Structured security alert logging
 * Standardized API error responses
 * Pytest test suite
+* Admin audit endpoints
+* CSV export and simulated demo-log generation
+* Pandas statistics and explainable anomaly flags
+* Local Streamlit analytics dashboard
+* Loopback-only Docker Compose demo configuration
 
 ---
 
@@ -425,6 +478,8 @@ Known limitations:
 
 * API keys are still stored and compared as plaintext.
 * Rate limiting is in-memory and not distributed.
+* Prompt scanning is keyword-based.
+* The dashboard has no authentication; do not expose it publicly.
 
 ---
 
@@ -432,15 +487,14 @@ Known limitations:
 
 Planned improvements:
 
-* GitHub portfolio description
 * API key hashing
 * Redis-based rate limiting
-* Admin log query endpoint
-* Security analytics dashboard
-* Token usage statistics
-* Docker support
+* Dashboard authentication and production-safe deployment
+* Additional event logging for authentication failures and rate-limit rejections
 * PostgreSQL migration
 * More advanced prompt risk scoring
+
+Portfolio-ready project and resume descriptions are in [PORTFOLIO.md](PORTFOLIO.md).
 
 ---
 

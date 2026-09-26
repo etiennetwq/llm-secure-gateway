@@ -1,0 +1,47 @@
+services:
+  gateway:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_PATH: /app/data/secure_gateway.db
+    command: >-
+      sh -c "python init_db.py && exec uvicorn main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - gateway_data:/app/data
+      - gateway_exports:/app/exports
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  dashboard:
+    build: .
+    command:
+      - python
+      - -m
+      - streamlit
+      - run
+      - dashboard/app.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+      - --server.headless=true
+      - --browser.gatherUsageStats=false
+    ports:
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - gateway_exports:/app/exports:ro
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+volumes:
+  gateway_data:
+  gateway_exports:
